@@ -2,5 +2,11 @@
   "previewPort": 3000,
   "healthPath": "/",
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
-  "secrets": []
+  "secrets": [
+    {
+      "name": "FINNHUB_API_KEY",
+      "description": "Finnhub market data API key (https://finnhub.io/register). Free tier: 60 calls/min, US stocks/ETFs.",
+      "requiredAtBoot": false
+    }
+  ]
 }
