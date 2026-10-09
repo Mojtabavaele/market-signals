@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: signals
+      POSTGRES_PASSWORD: signals_dev_password
+      POSTGRES_DB: signals
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signals -d signals"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: node:22-slim
+    restart: on-failure
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - api_node_modules:/app/node_modules
+    environment:
+      DATABASE_URL: postgres://signals:signals_dev_password@db:5432/signals
+      PORT: "8000"
+    command: ["sh", "-ec", "npm install --no-audit --no-fund && exec npm run dev"]
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  web:
+    image: node:22-slim
+    restart: on-failure
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - web_node_modules:/app/node_modules
+    environment:
+      API_PROXY_TARGET: http://api:8000
+      BASE44_PREVIEW_MODE:
+      __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS:
+    command: ["sh", "-ec", "npm install --no-audit --no-fund && exec npm run dev"]
+    ports:
+      - "3000:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  pgdata:
+  api_node_modules:
+  web_node_modules:
