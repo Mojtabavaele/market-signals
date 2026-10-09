@@ -1,6 +1,7 @@
 import express from 'express';
 import { assetsRouter } from './assets.js';
 import { pool } from './db.js';
+import { startPriceFeed } from './priceFeed.js';
 
 const app = express();
 app.use(express.json());
@@ -24,3 +25,4 @@ app.use((err, _req, res, _next) => {
 
 const port = Number(process.env.PORT) || 8000;
 app.listen(port, '0.0.0.0', () => console.log(`API listening on ${port}`));
+startPriceFeed();

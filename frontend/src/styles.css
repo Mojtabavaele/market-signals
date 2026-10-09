@@ -21,3 +21,6 @@ button { padding: 8px 14px; border: 0; border-radius: 8px; background: #3b82f6; 
 button:disabled { opacity: .6; }
 button.ghost { background: #334155; }
 button.danger { color: #f87171; }
+.price { display: flex; gap: 8px; align-items: baseline; flex: 1 1 100%; }
+.price .up { color: #4ade80; font-size: .85rem; }
+.price .down { color: #f87171; font-size: .85rem; }

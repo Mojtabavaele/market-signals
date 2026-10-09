@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listAssets, createAsset, updateAsset, deleteAsset } from './api.js';
 import AssetForm from './AssetForm.jsx';
+import Price from './Price.jsx';
 
 export default function App() {
   const [assets, setAssets] = useState([]);
@@ -13,7 +14,11 @@ export default function App() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    const t = setInterval(refresh, 30000);
+    return () => clearInterval(t);
+  }, []);
 
   const handleCreate = async (form) => {
     await createAsset(form);
@@ -51,6 +56,7 @@ export default function App() {
                   <span className="tag">{a.asset_type}</span>
                   <div className="muted">{a.name}{a.exchange ? ` · ${a.exchange}` : ''}</div>
                 </div>
+                <Price asset={a} />
                 <div className="rule">
                   Alert at ±{Number(a.volatility_threshold_pct)}% / {a.alert_window_minutes} min
                 </div>

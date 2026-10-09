@@ -47,7 +47,20 @@ export const assetsRouter = Router();
 
 assetsRouter.get('/', async (_req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM assets ORDER BY symbol');
+    const { rows } = await pool.query(`
+      SELECT a.*, lp.price AS last_price, lp.recorded_at AS last_price_at,
+             pp.price AS prev_price
+      FROM assets a
+      LEFT JOIN LATERAL (
+        SELECT price, recorded_at FROM price_points
+        WHERE asset_id = a.id ORDER BY recorded_at DESC LIMIT 1
+      ) lp ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT price FROM price_points
+        WHERE asset_id = a.id AND recorded_at <= now() - make_interval(mins => a.alert_window_minutes)
+        ORDER BY recorded_at DESC LIMIT 1
+      ) pp ON TRUE
+      ORDER BY a.symbol`);
     res.json(rows);
   } catch (e) { next(e); }
 });
